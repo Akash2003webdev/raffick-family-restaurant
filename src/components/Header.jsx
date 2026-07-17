@@ -47,11 +47,11 @@ export default function Header({ onAdminTrigger, activePage, onNavigate }) {
         {/* Split Text Layout: Big Brand Name + Small Modern Subtitle */}
         <div className="flex flex-col select-none pl-1 justify-center">
           {/* Large Main Title */}
-          <h1 className="font-graffiti text-3xl sm:text-4xl md:text-5xl font- text-primary-700 tracking-wider leading-none skew-x-[-2deg] drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] uppercase">
+          <h1 className="font-graffiti text-3xl text-center font-bold sm:text-4xl md:text-5xl font- text-primary-700 tracking-wider leading-none skew-x-[-2deg] drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] uppercase">
             Raffick
           </h1>
           {/* Small Subtitle Below */}
-          <span className="font-sans text-[10px] sm:text-xs font-bold tracking-[0.2em] text-gold-600 uppercase mt-0.5 whitespace-nowrap">
+          <span className="font-sans text-center text-[10px] sm:text-xs font-bold tracking-[0.2em] text-gold-600 uppercase mt-0.5 whitespace-nowrap">
             Family Restaurant
           </span>
         </div>
