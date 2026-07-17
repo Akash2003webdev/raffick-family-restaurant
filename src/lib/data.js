@@ -21,7 +21,7 @@ export const categories = [
     id: "cat-biryani",
     name: "Biryani",
     image:
-      "https://images.unsplash.com/photo-1563379091339-03246963d96c?q=80&w=400&auto=format&fit=crop",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTtWQFgd3t1sPPSxlnk-0TT5KOM6GnliFxVKqudAMSTA&s=10",
     status: "active",
   },
   {
