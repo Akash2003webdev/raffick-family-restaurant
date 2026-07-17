@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
 // Drop your splash videos at: public/ folder
-const DESKTOP_VIDEO_SRC = "/public/splash.mp4"; // Window/Desktop screen video
-const MOBILE_VIDEO_SRC = "/public/splash-mobile.mp4"; // Mobile screen video
+// Vercel fix: Removed "/public" from the path so it references the root folder on production
+const DESKTOP_VIDEO_SRC = "/splash.mp4"; // Window/Desktop screen video
+const MOBILE_VIDEO_SRC = "/splash-mobile.mp4"; // Mobile screen video
 
 // 6 minutes hard cap in milliseconds (6 * 60 * 1000)
 const MAX_DURATION = 3600000;
