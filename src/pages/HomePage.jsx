@@ -11,6 +11,7 @@ import {
   getOverallReviews,
   getRestaurantInfo,
 } from "../lib/api";
+import logo from "../assets/logo.png";   // 👈 import panunga
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -70,7 +71,7 @@ export default function HomePage({
             {/* Elegant Restaurant Logo Container */}
             <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/95 border border-white/20 flex items-center justify-center shrink-0 shadow-[0_10px_30px_rgba(0,0,0,0.1)] overflow-hidden transition-transform duration-300 hover:scale-105">
               <img
-                src="/src/assets/logo.png"
+                src={logo}
                 alt="Raffick Family Restaurant"
                 className="w-full h-full object-cover"
               />

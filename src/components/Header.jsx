@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { UtensilsCrossed, Home, MessageSquareText, MessageCircleQuestion, ShoppingCart } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import logo from "../assets/logo.png";   
+
 
 const DESKTOP_NAV = [
   { key: "home", label: "Home", icon: Home },
@@ -45,7 +47,7 @@ export default function Header({ onAdminTrigger, activePage, onNavigate }) {
   className="group w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 shadow-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-110 hover:rotate-12"
 >
   <img
-    src="/src/assets/logo.png"
+    src={logo}
     alt="Raffick Family Restaurant"
     className="w-full h-full object-cover transition-transform group-hover:scale-125"
   />
