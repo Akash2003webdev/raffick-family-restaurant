@@ -143,3 +143,104 @@ export async function getEnquiries() {
   if (error) throw error;
   return data || [];
 }
+
+// ----------------------------------------------------------------------------
+// Image uploads (Supabase Storage)
+// ----------------------------------------------------------------------------
+
+async function uploadImage(bucket, file) {
+  const ext = file.name.split(".").pop();
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from(bucket).upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export function uploadCategoryImage(file) {
+  return uploadImage("category-images", file);
+}
+
+export function uploadMenuItemImage(file) {
+  return uploadImage("menu-item-images", file);
+}
+
+// ----------------------------------------------------------------------------
+// Category CRUD (admin)
+// ----------------------------------------------------------------------------
+
+export async function createCategory({ name, image }) {
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({ name, image })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCategory(id, fields) {
+  const { data, error } = await supabase
+    .from("categories")
+    .update(fields)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCategory(id) {
+  const { error } = await supabase.from("categories").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ----------------------------------------------------------------------------
+// Menu item CRUD (admin)
+// ----------------------------------------------------------------------------
+
+export async function createMenuItem({ categoryId, name, image, vegType, price }) {
+  const { data: item, error } = await supabase
+    .from("menu_items")
+    .insert({
+      category_id: categoryId,
+      name,
+      images: image ? [image] : [],
+      veg_type: vegType,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  const { error: variantError } = await supabase
+    .from("menu_item_variants")
+    .insert({ item_id: item.id, name: "Regular", price });
+  if (variantError) throw variantError;
+  return item;
+}
+
+export async function updateMenuItem(id, fields) {
+  const { data, error } = await supabase
+    .from("menu_items")
+    .update(fields)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteMenuItem(id) {
+  const { error } = await supabase.from("menu_items").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function updateVariantPrice(variantId, price) {
+  const { error } = await supabase
+    .from("menu_item_variants")
+    .update({ price })
+    .eq("id", variantId);
+  if (error) throw error;
+}
