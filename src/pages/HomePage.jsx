@@ -11,7 +11,9 @@ import {
   getOverallReviews,
   getRestaurantInfo,
 } from "../lib/api";
-import logo from "../assets/logo.png";   // 👈 import panunga
+import logo from "../assets/logo.png";  
+import heroImage from "../assets/hero.png";  
+
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -81,7 +83,7 @@ export default function HomePage({
           {/* Luxury Main Hero Showcase Banner */}
           <div className="relative rounded-[2rem] overflow-hidden h-60 sm:h-72 md:h-[400px] shadow-[0_25px_60px_rgba(0,0,0,0.15)] group">
             <img
-              src={info?.heroImage}
+              src={heroImage}
               alt="Raffick Restaurant Experience"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
