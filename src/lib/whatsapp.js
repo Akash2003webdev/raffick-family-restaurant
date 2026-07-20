@@ -21,15 +21,14 @@ export function buildOrderMessage({ cartItems, orderType, tableNumber, address, 
   return lines.join("\n");
 }
 
-export function buildReservationMessage({ name, phone, date, time, guests, note }) {
+export function buildEnquiryMessage({ name, phone, enquiryType, message }) {
   const lines = [];
-  lines.push(`*Table Reservation — ${restaurantInfo.name}*`);
+  lines.push(`*New Enquiry — ${restaurantInfo.name}*`);
+  lines.push(`Type: ${enquiryType}`);
   lines.push(`Name: ${name}`);
   lines.push(`Phone: ${phone}`);
-  lines.push(`Date: ${date}`);
-  lines.push(`Time: ${time}`);
-  lines.push(`Guests: ${guests}`);
-  if (note) lines.push(`Special Request: ${note}`);
+  lines.push("");
+  lines.push(message);
   return lines.join("\n");
 }
 

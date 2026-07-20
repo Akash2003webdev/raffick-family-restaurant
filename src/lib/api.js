@@ -1,88 +1,145 @@
-// Mock API layer — function signatures are shaped so a future Supabase
-// integration can replace internals here without touching components.
+// API layer backed by Supabase. Function names/signatures match what the
+// components already call, so no component code had to change.
 
-import {
-  categories,
-  menuItems,
-  overallReviews,
-  productReviews,
-  restaurantInfo,
-  reservations,
-} from "./data";
+import { supabase } from "./supabaseClient";
+import { restaurantInfo } from "./data";
 
-const delay = (ms = 150) => new Promise((res) => setTimeout(res, ms));
+function normalizeItem(row) {
+  return {
+    ...row,
+    images: row.images || [],
+    variants: (row.variants || []).slice().sort((a, b) => a.sort_order - b.sort_order),
+  };
+}
+
+function normalizeReview(row) {
+  return { ...row, date: row.created_at?.slice(0, 10) };
+}
 
 export async function getRestaurantInfo() {
-  await delay();
+  // Static — not stored in the DB.
   return restaurantInfo;
 }
 
 export async function getCategories() {
-  await delay();
-  return categories.filter((c) => c.status === "active");
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("status", "active")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function getCategoryById(id) {
-  await delay();
-  return categories.find((c) => c.id === id) || null;
+  const { data, error } = await supabase.from("categories").select("*").eq("id", id).single();
+  if (error) throw error;
+  return data;
 }
 
 export async function getMenuItems({ categoryId, search } = {}) {
-  await delay();
-  let items = [...menuItems];
-  if (categoryId) items = items.filter((i) => i.category_id === categoryId);
-  if (search) {
-    const q = search.toLowerCase();
-    items = items.filter(
-      (i) =>
-        i.name.toLowerCase().includes(q) ||
-        i.description.toLowerCase().includes(q)
-    );
-  }
-  return items;
+  let query = supabase.from("menu_items").select("*, variants:menu_item_variants(*)");
+  if (categoryId) query = query.eq("category_id", categoryId);
+  if (search) query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+  const { data, error } = await query.order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data || []).map(normalizeItem);
 }
 
 export async function getMenuItemById(id) {
-  await delay();
-  return menuItems.find((i) => i.id === id) || null;
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*, variants:menu_item_variants(*)")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return normalizeItem(data);
 }
 
 export async function getPopularItems(limit = 8) {
-  await delay();
-  return [...menuItems].sort((a, b) => b.rating - a.rating).slice(0, limit);
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*, variants:menu_item_variants(*)")
+    .order("rating", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data || []).map(normalizeItem);
 }
 
 export async function getOverallReviews() {
-  await delay();
-  return overallReviews;
+  const { data, error } = await supabase
+    .from("overall_reviews")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map(normalizeReview);
 }
 
 export async function getItemReviews(itemId) {
-  await delay();
-  return productReviews[itemId] || [];
+  const { data, error } = await supabase
+    .from("item_reviews")
+    .select("*")
+    .eq("item_id", itemId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map(normalizeReview);
 }
 
 export async function submitReview({ itemId, name, rating, comment }) {
-  await delay();
-  const review = {
-    id: `pr-${Date.now()}`,
-    name,
-    rating,
-    comment,
-    date: new Date().toISOString().slice(0, 10),
-  };
-  if (itemId) {
-    productReviews[itemId] = productReviews[itemId] || [];
-    productReviews[itemId].unshift(review);
-  } else {
-    overallReviews.unshift(review);
-  }
-  return review;
+  const table = itemId ? "item_reviews" : "overall_reviews";
+  const payload = itemId ? { item_id: itemId, name, rating, comment } : { name, rating, comment };
+  const { data, error } = await supabase.from(table).insert(payload).select().single();
+  if (error) throw error;
+  return normalizeReview(data);
 }
 
-export async function submitReservation(data) {
-  await delay();
-  const reservation = { id: `res-${Date.now()}`, ...data };
-  reservations.unshift(reservation);
-  return reservation;
+export async function submitOrder({ cartItems, orderType, tableNumber, address, name, phone, total }) {
+  const { data, error } = await supabase
+    .from("orders")
+    .insert({
+      order_type: orderType,
+      table_number: tableNumber || null,
+      address: address || null,
+      customer_name: name,
+      customer_phone: phone,
+      items: cartItems,
+      total,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getOrders() {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function submitEnquiry({ name, phone, enquiryType, message }) {
+  const { data, error } = await supabase
+    .from("enquiries")
+    .insert({
+      name,
+      phone,
+      enquiry_type: enquiryType || "General",
+      message,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getEnquiries() {
+  const { data, error } = await supabase
+    .from("enquiries")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }

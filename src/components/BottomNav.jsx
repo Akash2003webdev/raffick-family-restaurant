@@ -1,9 +1,10 @@
-import { Home, UtensilsCrossed, MessageSquareText, ShoppingCart } from "lucide-react";
+import { Home, UtensilsCrossed, MessageSquareText, MessageCircleQuestion, ShoppingCart } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
 const NAV_ITEMS = [
   { key: "home", label: "Home", icon: Home },
   { key: "menu", label: "Menu", icon: UtensilsCrossed },
+  { key: "enquiry", label: "Enquiry", icon: MessageCircleQuestion },
   { key: "reviews", label: "Reviews", icon: MessageSquareText },
   { key: "cart", label: "Cart", icon: ShoppingCart },
 ];

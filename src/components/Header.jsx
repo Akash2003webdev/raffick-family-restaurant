@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
-import { UtensilsCrossed, Home, CalendarCheck, MessageSquareText, ShoppingCart } from "lucide-react";
+import { UtensilsCrossed, Home, MessageSquareText, MessageCircleQuestion, ShoppingCart } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
 const DESKTOP_NAV = [
   { key: "home", label: "Home", icon: Home },
   { key: "menu", label: "Menu", icon: UtensilsCrossed },
-  { key: "reservation", label: "Reserve", icon: CalendarCheck },
+  { key: "enquiry", label: "Enquiry", icon: MessageCircleQuestion },
   { key: "reviews", label: "Reviews", icon: MessageSquareText },
 ];
 
@@ -28,67 +28,93 @@ export default function Header({ onAdminTrigger, activePage, onNavigate }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-cream p-3 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto bg-white rounded-full shadow-soft px-3 py-2 md:py-2.5 flex items-center gap-3">
-        <button
-          onMouseDown={startPress}
-          onMouseUp={cancelPress}
-          onMouseLeave={cancelPress}
-          onTouchStart={startPress}
-          onTouchEnd={cancelPress}
-          onClick={() => onNavigate?.("home")}
-          className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gold-50 border border-gold-200 flex items-center justify-center transition-transform shrink-0 ${
-            pressing ? "scale-90" : "scale-100"
-          }`}
-        >
-          <UtensilsCrossed size={18} className="text-primary-600" />
-        </button>
-        
-        {/* Split Text Layout: Big Brand Name + Small Modern Subtitle */}
-        <div className="flex flex-col select-none pl-1 justify-center">
-          {/* Large Main Title */}
-          <h1 className="font-graffiti text-3xl text-center font-bold sm:text-4xl md:text-5xl font- text-primary-700 tracking-wider leading-none skew-x-[-2deg] drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] uppercase">
+   <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b border-white/20">
+  <div className="max-w-7xl mx-auto px-5 py-4">
+    <div className="flex items-center justify-between rounded-full bg-white/90 shadow-2xl border border-gray-100 px-5 py-3">
+
+      {/* Logo */}
+      <div className="flex items-center gap-4">
+
+      <button
+  onMouseDown={startPress}
+  onMouseUp={cancelPress}
+  onMouseLeave={cancelPress}
+  onTouchStart={startPress}
+  onTouchEnd={cancelPress}
+  onClick={() => onNavigate?.("home")}
+  className="group w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 shadow-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-110 hover:rotate-12"
+>
+  <img
+    src="/src/assets/logo.png"
+    alt="Raffick Family Restaurant"
+    className="w-full h-full object-cover transition-transform group-hover:scale-125"
+  />
+</button> 
+
+        <div>
+          <h1 className="font-display text-4xl font-extrabold tracking-wide text-gray-900">
             Raffick
           </h1>
-          {/* Small Subtitle Below */}
-          <span className="font-sans text-center text-[10px] sm:text-xs font-bold tracking-[0.2em] text-gold-600 uppercase mt-0.5 whitespace-nowrap">
+
+          <p className="text-xs uppercase tracking-[0.35em] text-amber-600 font-semibold">
             Family Restaurant
-          </span>
+          </p>
         </div>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1 ml-auto">
-          {DESKTOP_NAV.map(({ key, label, icon: Icon }) => {
-            const active = activePage === key;
-            return (
-              <button
-                key={key}
-                onClick={() => onNavigate?.(key)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                  active ? "bg-primary-500 text-white" : "text-primary-600 hover:bg-primary-50"
-                }`}
-              >
-                <Icon size={16} />
-                {label}
-              </button>
-            );
-          })}
-          <button
-            onClick={() => onNavigate?.("cart")}
-            className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold ml-1 transition-colors ${
-              activePage === "cart" ? "bg-gold-400 text-primary-800" : "bg-gold-400/90 text-primary-800 hover:bg-gold-400"
-            }`}
-          >
-            <ShoppingCart size={16} />
-            Cart
-            {itemCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-primary-700 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">
-                {itemCount}
-              </span>
-            )}
-          </button>
-        </nav>
       </div>
-    </header>
+
+      {/* Desktop Nav */}
+
+      <nav className="hidden lg:flex items-center gap-3">
+
+        {DESKTOP_NAV.map(({ key, label, icon: Icon }) => {
+
+          const active = activePage === key;
+
+          return (
+            <button
+              key={key}
+              onClick={() => onNavigate?.(key)}
+              className={`group flex items-center gap-2 px-5 py-3 rounded-full font-semibold transition-all duration-300
+
+              ${
+                active
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg scale-105"
+                  : "text-gray-700 hover:bg-amber-50 hover:text-amber-600 hover:scale-105"
+              }
+              `}
+            >
+              <Icon
+                size={18}
+                className="transition-transform duration-300 group-hover:rotate-12"
+              />
+
+              {label}
+            </button>
+          );
+        })}
+
+        {/* Cart */}
+
+        <button
+          onClick={() => onNavigate?.("cart")}
+          className="relative ml-2 flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-6 py-3 text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+        >
+          <ShoppingCart size={18} />
+
+          Cart
+
+          {itemCount > 0 && (
+            <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white ring-4 ring-white animate-pulse">
+              {itemCount}
+            </span>
+          )}
+        </button>
+
+      </nav>
+
+    </div>
+  </div>
+</header>
   );
 }

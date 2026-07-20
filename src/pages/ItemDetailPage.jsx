@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Minus, Plus, Flame } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Flame, Sparkles, Star, ShoppingBag, Send, User, MessageSquare } from "lucide-react";
 import VegBadge from "../components/VegBadge";
 import Stars from "../components/Stars";
 import ReviewCard from "../components/ReviewCard";
@@ -15,6 +15,7 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
   const [reviews, setReviews] = useState([]);
   const [form, setForm] = useState({ name: "", rating: 5, comment: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [hoveredStar, setHoveredStar] = useState(0);
 
   useEffect(() => {
     if (item) getItemReviews(item.id).then(setReviews);
@@ -51,102 +52,130 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto pb-32 md:pb-16">
-      <div className="md:grid md:grid-cols-2 md:gap-10 md:px-8 md:pt-8">
-        {/* Image */}
-        <div className="relative h-64 md:h-[26rem] md:rounded-3xl md:overflow-hidden md:shadow-card">
-          <img src={item.images?.[0]} alt={item.name} className="w-full h-full object-cover" />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-40 md:pb-24 min-h-screen bg-gray-50/30">
+      
+      {/* Detail Wrapper Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-14 pt-4 md:pt-8 items-start">
+        
+        {/* 1. Image Showcase Area */}
+        <div className="relative h-72 sm:h-96 md:h-[32rem] rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] group">
+          <img 
+            src={item.images?.[0]} 
+            alt={item.name} 
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          
+          {/* Mobile Glassmorphic Back Action */}
           <button
             onClick={onBack}
-            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center shadow-soft md:hidden"
+            className="absolute top-5 left-5 w-11 h-11 rounded-2xl bg-white/95 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-lg text-gray-800 hover:text-amber-500 transition-all active:scale-90 md:hidden"
           >
-            <ArrowLeft size={18} className="text-primary-700" />
+            <ArrowLeft size={20} />
           </button>
         </div>
 
-        {/* Details */}
-        <div className="px-4 pt-4 md:px-0 md:pt-0 space-y-5">
+        {/* 2. Culinary Specific Content Panel */}
+        <div className="space-y-6 md:pt-2">
           <button
             onClick={onBack}
-            className="hidden md:flex items-center gap-1.5 text-sm font-semibold text-primary-500 hover:text-primary-600"
+            className="hidden md:inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-amber-600 transition-colors group mb-2"
           >
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" /> Back to Menu
           </button>
 
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <VegBadge type={item.veg_type} size={16} />
+            {/* Badges Layout */}
+            <div className="flex items-center gap-3 mb-2.5">
+              <VegBadge type={item.veg_type} size={18} />
               {item.spice_level && (
-                <span className="flex items-center gap-1 text-xs text-primary-500">
-                  <Flame size={12} /> {SPICE_LABEL[item.spice_level]}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 text-orange-600 border border-orange-100/70 text-xs font-bold uppercase tracking-wider">
+                  <Flame size={13} className="fill-orange-500 text-orange-500" /> {SPICE_LABEL[item.spice_level]}
                 </span>
               )}
             </div>
-            <h1 className="font-display font-bold text-2xl md:text-3xl text-primary-800">{item.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
+
+            <h1 className="font-display font-black text-3xl md:text-5xl text-gray-950 tracking-tight leading-tight">
+              {item.name}
+            </h1>
+            
+            {/* Rating Stars Inline */}
+            <div className="flex items-center gap-2 mt-2.5">
               <Stars rating={item.rating} size={14} />
-              <span className="text-xs text-gray-400">({item.rating})</span>
+              <span className="text-xs font-bold text-gray-500">({item.rating || "0.0"})</span>
             </div>
-            <p className="text-sm md:text-base text-gray-500 mt-2">{item.description}</p>
+            
+            <p className="text-sm md:text-base text-gray-600 mt-4 leading-relaxed font-medium">
+              {item.description}
+            </p>
           </div>
 
+          {/* Sold Out Notification */}
           {isSoldOut && (
-            <div className="bg-red-50 text-red-600 text-sm font-semibold rounded-2xl px-4 py-2 text-center">
-              Currently Sold Out
+            <div className="bg-rose-50 text-rose-600 border border-rose-100 text-sm font-bold rounded-2xl px-4 py-3 text-center shadow-sm">
+              Currently Unavailable (Sold Out)
             </div>
           )}
 
+          {/* Dynamic Variant Selection Tabs */}
           {item.variants?.length > 1 && (
-            <div>
-              <h3 className="text-sm font-semibold text-primary-700 mb-2">Choose option</h3>
-              <div className="flex gap-2 flex-wrap">
-                {item.variants.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setVariant(v)}
-                    className={`px-4 py-2 rounded-2xl text-sm font-medium border transition-colors ${
-                      variant?.id === v.id
-                        ? "bg-primary-500 border-primary-500 text-white"
-                        : "border-gray-200 text-gray-600 hover:border-primary-300"
-                    }`}
-                  >
-                    {v.name} · ₹{v.price}
-                  </button>
-                ))}
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-gray-700 tracking-wider uppercase px-1">
+                Choose Portion Size
+              </label>
+              <div className="flex gap-2.5 flex-wrap">
+                {item.variants.map((v) => {
+                  const isSelected = variant?.id === v.id;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setVariant(v)}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all duration-300 ${
+                        isSelected
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 border-amber-600 text-white shadow-md shadow-orange-500/10 scale-105"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-amber-400 hover:text-amber-500"
+                      }`}
+                    >
+                      {v.name} · ₹{v.price}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between bg-white rounded-2xl shadow-soft p-4">
+          {/* Price & Micro-Quantity Workspace */}
+          <div className="flex items-center justify-between bg-white border border-gray-100/80 rounded-3xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
             <div>
-              <span className="text-xs text-gray-400 block">Price</span>
-              <span className="font-display font-bold text-xl text-primary-700">₹{price}</span>
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Subtotal</span>
+              <span className="font-display font-black text-2xl text-gray-900">₹{price * qty}</span>
             </div>
-            <div className="flex items-center gap-3 bg-primary-50 rounded-full px-3 py-1.5">
+            
+            <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-full p-1.5">
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="w-7 h-7 rounded-full bg-white shadow-soft flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center transition-transform active:scale-90"
               >
-                <Minus size={14} className="text-primary-600" />
+                <Minus size={13} className="text-gray-700" />
               </button>
-              <span className="font-semibold text-primary-700 w-4 text-center">{qty}</span>
+              <span className="font-bold text-gray-900 w-5 text-center text-sm">{qty}</span>
               <button
                 onClick={() => setQty((q) => q + 1)}
-                className="w-7 h-7 rounded-full bg-white shadow-soft flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center transition-transform active:scale-90"
               >
-                <Plus size={14} className="text-primary-600" />
+                <Plus size={13} className="text-gray-700" />
               </button>
             </div>
           </div>
 
-          {/* Desktop inline action buttons */}
-          <div className="hidden md:flex gap-3">
+          {/* Desktop Checkouts Action Layer */}
+          <div className="hidden md:flex gap-4">
             <button
               onClick={handleAddToCart}
               disabled={isSoldOut}
-              className="flex-1 py-3 rounded-2xl border-2 border-primary-500 text-primary-600 font-semibold text-sm hover:bg-primary-50 disabled:opacity-40 transition-colors"
+              className="flex-1 py-4 rounded-2xl border-2 border-amber-500 text-amber-600 font-bold text-sm hover:bg-amber-50/50 disabled:opacity-40 transition-all active:scale-[0.99]"
             >
-              Add to Cart
+              Add to Basket
             </button>
             <button
               onClick={() => {
@@ -154,77 +183,119 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
                 onGoToCart?.();
               }}
               disabled={isSoldOut}
-              className="flex-1 py-3 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-semibold text-sm disabled:opacity-40 transition-colors"
+              className="group flex-1 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm tracking-wide shadow-lg shadow-orange-500/10 disabled:opacity-40 transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
             >
               Order Now
+              <ShoppingBag size={16} />
             </button>
           </div>
         </div>
       </div>
 
-      <div className="px-4 md:px-8 pt-8 md:pt-12 max-w-3xl md:max-w-none">
-        <h3 className="font-display font-bold text-lg md:text-xl text-primary-700 mb-3">Reviews</h3>
-        <div className="grid md:grid-cols-3 gap-3">
-          {reviews.length === 0 && (
-            <p className="text-sm text-gray-400">No reviews yet for this dish.</p>
+      {/* 3. Review Workspace Module */}
+      <div className="mt-16 md:mt-24 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10 items-start border-t border-gray-100 pt-10">
+        
+        {/* Reviews Feed List */}
+        <div className="space-y-4">
+          <h3 className="font-display font-black text-xl md:text-2xl text-gray-900 tracking-tight flex items-center gap-1.5 mb-2">
+            <Sparkles size={18} className="text-amber-500" /> Taste Testimonials
+          </h3>
+          
+          {reviews.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400 text-sm">
+              No reviews yet for this dish. Be the first to praise it!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {reviews.map((r) => (
+                <div key={r.id} className="transition-transform duration-300 hover:-translate-y-0.5">
+                  <ReviewCard review={r} />
+                </div>
+              ))}
+            </div>
           )}
-          {reviews.map((r) => (
-            <ReviewCard key={r.id} review={r} />
-          ))}
         </div>
 
+        {/* Premium Write a Review Sticky Layout */}
         <form
           onSubmit={handleSubmitReview}
-          className="mt-4 bg-white rounded-2xl shadow-soft p-4 space-y-3 md:max-w-md"
+          className="bg-white rounded-3xl border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-5 space-y-4 lg:sticky lg:top-28"
         >
-          <h4 className="text-sm font-semibold text-primary-700">Write a review</h4>
-          <input
-            type="text"
-            placeholder="Your name"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"
-          />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Rating:</span>
-            <select
-              value={form.rating}
-              onChange={(e) => setForm((f) => ({ ...f, rating: Number(e.target.value) }))}
-              className="border border-gray-200 rounded-xl px-2 py-1 text-sm outline-none"
-            >
-              {[5, 4, 3, 2, 1].map((n) => (
-                <option key={n} value={n}>
-                  {n} ★
-                </option>
-              ))}
-            </select>
+          <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wider pb-2 border-b border-gray-100">
+            Review This Dish
+          </h4>
+          
+          <div className="relative group">
+            <User size={16} className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Your Name"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              className="w-full bg-gray-50/50 border border-gray-200/80 rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+              required
+            />
           </div>
-          <textarea
-            placeholder="Share your experience..."
-            value={form.comment}
-            onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
-            rows={3}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400 resize-none"
-          />
+
+          {/* Premium Dynamic Interactive Rating Box */}
+          <div className="bg-gray-50/50 border border-gray-200/60 rounded-xl p-3 flex flex-col items-center gap-1.5">
+            <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">Your Rating</span>
+            <div className="flex gap-1.5">
+              {[1, 2, 3, 4, 5].map((star) => {
+                const isFilled = hoveredStar ? star <= hoveredStar : star <= form.rating;
+                return (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, rating: star }))}
+                    onMouseEnter={() => setHoveredStar(star)}
+                    onMouseLeave={() => setHoveredStar(0)}
+                    className="transition-transform duration-150 hover:scale-125 focus:outline-none"
+                  >
+                    <Star
+                      size={20}
+                      className={`transition-colors duration-200 ${
+                        isFilled ? "text-amber-400 fill-amber-400" : "text-gray-300 fill-transparent"
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="relative group">
+            <MessageSquare size={16} className="absolute left-4 top-4 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+            <textarea
+              placeholder="How did you like the flavor, portion, spice...?"
+              value={form.comment}
+              onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
+              rows={3}
+              className="w-full bg-gray-50/50 border border-gray-200/80 rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none transition-all focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 resize-none"
+              required
+            />
+          </div>
+
           <button
             type="submit"
-            disabled={submitting}
-            className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
+            disabled={submitting || !form.name.trim() || !form.comment.trim()}
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold shadow-md tracking-wide disabled:opacity-40 transition-all hover:scale-[1.01] flex items-center justify-center gap-2"
           >
-            {submitting ? "Submitting..." : "Submit Review"}
+            {submitting ? "Publishing..." : "Publish Review"}
+            <Send size={14} />
           </button>
         </form>
       </div>
 
-      {/* Mobile fixed action bar */}
-      <div className="fixed bottom-16 md:hidden left-0 right-0 bg-white border-t border-gray-100 p-3 z-20">
-        <div className="max-w-5xl mx-auto flex gap-3">
+      {/* 4. Mobile Fixed Bottom Navigation Bar Overlay */}
+      <div className="fixed bottom-16 md:hidden left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100/80 p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.04)]">
+        <div className="max-w-xl mx-auto flex gap-3">
           <button
             onClick={handleAddToCart}
             disabled={isSoldOut}
-            className="flex-1 py-3 rounded-2xl border-2 border-primary-500 text-primary-600 font-semibold text-sm disabled:opacity-40"
+            className="flex-1 py-3.5 rounded-xl border-2 border-amber-500 text-amber-600 font-bold text-sm active:scale-95 transition-transform disabled:opacity-40 bg-white"
           >
-            Add to Cart
+            Add to Basket
           </button>
           <button
             onClick={() => {
@@ -232,7 +303,7 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
               onGoToCart?.();
             }}
             disabled={isSoldOut}
-            className="flex-1 py-3 rounded-2xl bg-primary-500 text-white font-semibold text-sm disabled:opacity-40"
+            className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm active:scale-95 transition-transform shadow-md shadow-orange-500/10 disabled:opacity-40"
           >
             Order Now
           </button>

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, User, Phone, MapPin, Hash, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import ConfirmOrderModal from "../components/ConfirmOrderModal";
 import { orderTypes } from "../lib/data";
 import { buildOrderMessage, sendWhatsAppMessage } from "../lib/whatsapp";
+import { submitOrder } from "../lib/api";
 
 export default function CartPage({ onToast, onOrderSent }) {
   const { items, updateQuantity, removeItem, clearCart, total } = useCart();
@@ -21,7 +22,7 @@ export default function CartPage({ onToast, onOrderSent }) {
     (orderType !== "Dine-in" || tableNumber.trim()) &&
     (orderType !== "Delivery" || address.trim());
 
-  function handleSend() {
+  async function handleSend() {
     const message = buildOrderMessage({
       cartItems: items,
       orderType,
@@ -30,6 +31,11 @@ export default function CartPage({ onToast, onOrderSent }) {
       name,
       phone,
     });
+    try {
+      await submitOrder({ cartItems: items, orderType, tableNumber, address, name, phone, total });
+    } catch (err) {
+      console.error("Failed to save order to backend:", err);
+    }
     sendWhatsAppMessage(message);
     clearCart();
     setShowConfirm(false);
@@ -37,59 +43,81 @@ export default function CartPage({ onToast, onOrderSent }) {
     onOrderSent?.();
   }
 
+  // Modern Empty Cart Screen
   if (items.length === 0) {
     return (
-      <div className="max-w-6xl mx-auto px-4 pt-16 md:pt-24 pb-24 text-center">
-        <ShoppingBag size={48} className="mx-auto text-gray-300 mb-3" />
-        <p className="text-gray-400 text-sm">Your cart is empty</p>
+      <div className="max-w-md mx-auto px-6 pt-24 pb-32 text-center flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="w-20 h-20 rounded-[2rem] bg-gray-50 flex items-center justify-center border border-gray-100/80 mb-6 shadow-inner relative">
+          <ShoppingBag size={32} className="text-gray-300" />
+          <span className="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-amber-400" />
+        </div>
+        <h2 className="font-display font-black text-xl text-gray-800 tracking-tight">Your Cart is Empty</h2>
+        <p className="text-gray-400 text-sm mt-2 max-w-xs leading-relaxed">
+          Looks like you haven't added anything to your cart yet. Head back to our delicious menu!
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-8 pt-6 md:pt-10 pb-40 md:pb-16">
-      <h1 className="font-display font-bold text-2xl md:text-3xl text-primary-700 mb-5 md:mb-8">
-        Your Cart
-      </h1>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-14 pb-40 md:pb-20 min-h-screen bg-gray-50/40">
+      
+      {/* Title Header */}
+      <div className="mb-6 md:mb-10">
+        <span className="flex items-center gap-1.5 text-amber-500 text-xs font-bold tracking-[0.2em] uppercase mb-1">
+          <Sparkles size={14} /> Review & Checkout
+        </span>
+        <h1 className="font-display font-black text-2xl md:text-4xl text-gray-900 tracking-tight">
+          Your Culinary Basket
+        </h1>
+      </div>
 
-      <div className="md:grid md:grid-cols-[1fr_380px] md:gap-8 md:items-start">
-        {/* Items */}
-        <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_390px] gap-8 items-start">
+        
+        {/* Responsive Items List */}
+        <div className="space-y-4">
           {items.map((item) => (
             <div
               key={`${item.id}-${item.variantId || "default"}`}
-              className="bg-white rounded-2xl shadow-soft p-3 flex items-center gap-3"
+              className="bg-white rounded-2xl border border-gray-100/80 shadow-[0_10px_30px_rgba(0,0,0,0.02)] p-4 flex items-center gap-4 transition-all duration-300 hover:shadow-[0_15px_40px_rgba(0,0,0,0.04)]"
             >
               <img
                 src={item.image}
                 alt={item.name}
-                className="w-16 h-16 rounded-xl object-cover shrink-0"
+                className="w-20 h-20 rounded-xl object-cover shrink-0 border border-gray-100"
               />
+              
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm text-primary-800 truncate">{item.name}</h3>
+                <h3 className="font-bold text-sm md:text-base text-gray-800 truncate">{item.name}</h3>
                 {item.variantName && (
-                  <p className="text-xs text-gray-400">{item.variantName}</p>
+                  <span className="inline-block bg-gray-50 text-gray-500 font-semibold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md mt-0.5 border border-gray-100">
+                    {item.variantName}
+                  </span>
                 )}
-                <span className="text-sm font-bold text-primary-600">₹{item.price}</span>
+                <div className="text-base font-extrabold text-amber-600 mt-1">₹{item.price}</div>
               </div>
-              <div className="flex items-center gap-2 bg-primary-50 rounded-full px-2 py-1">
+
+              {/* Modern Premium Quantity Controls */}
+              <div className="flex items-center gap-2.5 bg-gray-50/80 border border-gray-100 rounded-full p-1.5">
                 <button
                   onClick={() => updateQuantity(item.id, item.variantId, item.quantity - 1)}
-                  className="w-6 h-6 rounded-full bg-white shadow-soft flex items-center justify-center"
+                  className="w-7 h-7 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center transition-transform active:scale-90 hover:text-amber-600"
                 >
-                  <Minus size={12} className="text-primary-600" />
+                  <Minus size={12} />
                 </button>
-                <span className="text-sm font-semibold w-4 text-center">{item.quantity}</span>
+                <span className="text-sm font-bold w-5 text-center text-gray-800">{item.quantity}</span>
                 <button
                   onClick={() => updateQuantity(item.id, item.variantId, item.quantity + 1)}
-                  className="w-6 h-6 rounded-full bg-white shadow-soft flex items-center justify-center"
+                  className="w-7 h-7 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center transition-transform active:scale-90 hover:text-amber-600"
                 >
-                  <Plus size={12} className="text-primary-600" />
+                  <Plus size={12} />
                 </button>
               </div>
+
+              {/* Trash Action */}
               <button
                 onClick={() => removeItem(item.id, item.variantId)}
-                className="text-red-400 hover:text-red-500"
+                className="text-gray-400 hover:text-rose-500 p-1.5 transition-colors rounded-xl hover:bg-rose-50/50"
               >
                 <Trash2 size={16} />
               </button>
@@ -97,122 +125,177 @@ export default function CartPage({ onToast, onOrderSent }) {
           ))}
         </div>
 
-        {/* Order details / summary */}
-        <div className="bg-white rounded-2xl shadow-soft p-4 md:p-5 space-y-3 mt-4 md:mt-0 md:sticky md:top-24">
-          <h3 className="text-sm font-semibold text-primary-700">Order Type</h3>
-          <div className="flex gap-2">
-            {orderTypes.map((type) => (
-              <button
-                key={type}
-                onClick={() => setOrderType(type)}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  orderType === type
-                    ? "bg-primary-500 border-primary-500 text-white"
-                    : "border-gray-200 text-gray-500 hover:border-primary-300"
-                }`}
-              >
-                {type}
-              </button>
-            ))}
+        {/* Premium Checkout Side Panel */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-5 md:p-6 space-y-6 lg:sticky lg:top-28 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+          
+          {/* Order Type Tabs */}
+          <div>
+            <label className="text-xs font-bold text-gray-700 tracking-wider uppercase mb-2.5 block px-1">
+              Order Details
+            </label>
+            <div className="flex bg-gray-50 border border-gray-200/50 p-1 rounded-2xl">
+              {orderTypes.map((type) => {
+                const active = orderType === type;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setOrderType(type)}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 ${
+                      active
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md scale-[1.02]"
+                        : "text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    {type}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {orderType === "Dine-in" && (
-            <input
-              type="text"
-              placeholder="Table Number"
-              value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"
-            />
-          )}
-          {orderType === "Delivery" && (
-            <textarea
-              placeholder="Delivery Address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              rows={2}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400 resize-none"
-            />
-          )}
+          {/* Dynamic Input States */}
+          <div className="space-y-4">
+            {orderType === "Dine-in" && (
+              <div className="relative group">
+                <Hash size={16} className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Table Number *"
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  className="w-full bg-gray-50/50 border border-gray-200/80 rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none transition-all duration-300 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                />
+              </div>
+            )}
+            
+            {orderType === "Delivery" && (
+              <div className="relative group">
+                <MapPin size={16} className="absolute left-4 top-4 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+                <textarea
+                  placeholder="Full Delivery Address *"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  rows={2}
+                  className="w-full bg-gray-50/50 border border-gray-200/80 rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none transition-all duration-300 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 resize-none"
+                />
+              </div>
+            )}
 
-          <input
-            type="text"
-            placeholder="Your Name *"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"
-          />
-          <input
-            type="tel"
-            placeholder="Phone Number *"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"
-          />
-
-          <div className="hidden md:block border-t border-gray-100 pt-3">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-500">Total</span>
-              <span className="font-display font-bold text-xl text-primary-700">₹{total}</span>
+            <div className="relative group">
+              <User size={16} className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Your Name *"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none transition-all duration-300 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+              />
             </div>
+
+            <div className="relative group">
+              <Phone size={16} className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+              <input
+                type="tel"
+                placeholder="Phone Number *"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none transition-all duration-300 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+              />
+            </div>
+          </div>
+
+          {/* Desktop Summary Footer */}
+          <div className="hidden md:block border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-gray-500">Basket Subtotal</span>
+              <span className="font-display font-black text-2xl text-gray-900">₹{total}</span>
+            </div>
+            
             <button
               onClick={() => setShowConfirm(true)}
               disabled={!canOrder}
-              className="w-full py-3 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-semibold text-sm disabled:opacity-40 transition-colors"
+              className="group w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm tracking-wide shadow-lg shadow-orange-500/10 disabled:opacity-40 disabled:pointer-events-none transition-all duration-300 flex items-center justify-center gap-2"
             >
-              Order on WhatsApp
+              Order via WhatsApp
+              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile fixed bar */}
-      <div className="fixed bottom-16 md:hidden left-0 right-0 bg-white border-t border-gray-100 p-3 z-20">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
+      {/* Mobile Sticky Bar */}
+      <div className="fixed bottom-16 md:hidden left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100/80 p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.04)]">
+        <div className="max-w-xl mx-auto flex items-center justify-between gap-6">
           <div>
-            <span className="text-xs text-gray-400 block">Total</span>
-            <span className="font-display font-bold text-lg text-primary-700">₹{total}</span>
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Total</span>
+            <span className="font-display font-black text-xl text-gray-900">₹{total}</span>
           </div>
           <button
             onClick={() => setShowConfirm(true)}
             disabled={!canOrder}
-            className="flex-1 max-w-[220px] py-3 rounded-2xl bg-primary-500 text-white font-semibold text-sm disabled:opacity-40"
+            className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm tracking-wide shadow-md shadow-orange-500/10 disabled:opacity-40 transition-transform active:scale-95"
           >
-            Order on WhatsApp
+            Order via WhatsApp
           </button>
         </div>
       </div>
 
+      {/* Premium Content Confirmation Modal */}
       <ConfirmOrderModal
         open={showConfirm}
-        title="Confirm Your Order"
+        title="Verify Your Feast"
         onCancel={() => setShowConfirm(false)}
         onConfirm={handleSend}
       >
-        <div className="space-y-2 text-sm">
-          <p className="font-semibold text-primary-700">{orderType}</p>
-          {orderType === "Dine-in" && <p className="text-gray-500">Table: {tableNumber}</p>}
-          {orderType === "Delivery" && <p className="text-gray-500">Address: {address}</p>}
-          <div className="border-t border-gray-100 pt-2 space-y-1">
+        <div className="space-y-4 text-sm">
+          {/* Header Metadata */}
+          <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div>
+              <span className="text-xs text-gray-400 block font-semibold uppercase tracking-wider">Order Modality</span>
+              <span className="font-bold text-amber-600 text-sm">{orderType}</span>
+            </div>
+            {orderType === "Dine-in" && tableNumber && (
+              <div className="text-right">
+                <span className="text-xs text-gray-400 block font-semibold uppercase tracking-wider">Table</span>
+                <span className="font-bold text-gray-800 text-sm">#{tableNumber}</span>
+              </div>
+            )}
+            {orderType === "Delivery" && address && (
+              <div className="text-right max-w-[150px] truncate">
+                <span className="text-xs text-gray-400 block font-semibold uppercase tracking-wider">Delivery To</span>
+                <span className="font-medium text-gray-700 text-xs truncate block">{address}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Cart Bill Details */}
+          <div className="border border-gray-100 rounded-2xl p-3.5 space-y-2.5 bg-white shadow-inner max-h-40 overflow-y-auto">
             {items.map((item) => (
               <div
                 key={`${item.id}-${item.variantId || "default"}`}
-                className="flex justify-between text-gray-600"
+                className="flex justify-between items-start text-xs text-gray-600"
               >
-                <span>
-                  {item.name} {item.variantName ? `(${item.variantName})` : ""} x{item.quantity}
+                <span className="font-medium max-w-[70%]">
+                  {item.name} {item.variantName ? `(${item.variantName})` : ""} <span className="text-amber-600 font-bold">x{item.quantity}</span>
                 </span>
-                <span>₹{item.price * item.quantity}</span>
+                <span className="font-bold text-gray-800">₹{item.price * item.quantity}</span>
               </div>
             ))}
           </div>
-          <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-primary-700">
-            <span>Total</span>
-            <span>₹{total}</span>
+
+          {/* Total & Summary Metadata */}
+          <div className="border-t border-gray-200/60 pt-3 flex justify-between items-center font-black text-gray-900 text-base">
+            <span>Amount Payable</span>
+            <span className="text-xl text-amber-600">₹{total}</span>
           </div>
-          <p className="text-gray-500">
-            {name} · {phone}
-          </p>
+
+          <div className="flex items-center gap-2 bg-amber-50/50 text-amber-800 p-3 rounded-xl border border-amber-100/60 text-xs font-medium">
+            <AlertCircle size={14} className="shrink-0" />
+            <p className="truncate">
+              Sending to: <span className="font-bold">{name}</span> ({phone})
+            </p>
+          </div>
         </div>
       </ConfirmOrderModal>
     </div>

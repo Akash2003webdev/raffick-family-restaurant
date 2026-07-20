@@ -1,34 +1,82 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles, Utensils } from "lucide-react";
 import MenuItemCard from "../components/MenuItemCard";
 import { getMenuItems } from "../lib/api";
 
 export default function CategoryPage({ category, onBack, onSelectItem, onToast }) {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (category) getMenuItems({ categoryId: category.id }).then(setItems);
+    if (category) {
+      setLoading(true);
+      getMenuItems({ categoryId: category.id })
+        .then((data) => {
+          setItems(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
   }, [category]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-8 pt-6 md:pt-10 pb-24 md:pb-16 space-y-5 md:space-y-8">
-      <div className="flex items-center gap-2">
-        <button onClick={onBack} className="text-primary-500 hover:text-primary-600">
-          <ArrowLeft size={20} />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-12 pb-28 md:pb-20 min-h-screen bg-gray-50/30">
+      
+      {/* Premium Header Bar */}
+      <div className="flex items-center gap-4 mb-8 md:mb-12 animate-fade-in">
+        {/* Back Button with Premium Glass Effect */}
+        <button 
+          onClick={onBack} 
+          className="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-700 hover:text-amber-500 hover:border-amber-200 transition-all duration-300 hover:scale-105 active:scale-95"
+          aria-label="Go back"
+        >
+          <ArrowLeft size={18} />
         </button>
-        <h1 className="font-display font-bold text-2xl md:text-3xl text-primary-700">{category?.name}</h1>
+        
+        <div>
+          <span className="flex items-center gap-1.5 text-amber-500 text-[10px] font-bold tracking-[0.2em] uppercase mb-0.5">
+            <Sparkles size={11} /> Culinary Category
+          </span>
+          <h1 className="font-display font-black text-2xl md:text-4xl text-gray-950 tracking-tight">
+            {category?.name}
+          </h1>
+        </div>
       </div>
-      {items.length === 0 ? (
-        <p className="text-sm text-gray-400">No items in this category yet.</p>
+
+      {/* Grid Content / Loading States */}
+      {loading ? (
+        /* Premium Skeleton Loading Grid */
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="bg-white border border-gray-100/80 rounded-2xl p-3 space-y-3 animate-pulse">
+              <div className="bg-gray-100 rounded-xl h-28 md:h-36 w-full" />
+              <div className="h-4 bg-gray-100 rounded-md w-3/4" />
+              <div className="h-4 bg-gray-100 rounded-md w-1/2" />
+            </div>
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        /* Modern Empty State Container */
+        <div className="max-w-sm mx-auto text-center py-16 px-6 bg-white border border-gray-100 rounded-3xl shadow-[0_15px_40px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 text-gray-400 mb-4">
+            <Utensils size={20} />
+          </div>
+          <h3 className="font-bold text-gray-800 text-sm">No Delicacies Available</h3>
+          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+            We are working on bringing these delicious dishes to your screen very soon.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+        /* Premium Items Grid Layout */
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 animate-fade-in">
           {items.map((item) => (
-            <MenuItemCard
-              key={item.id}
-              item={item}
-              onClick={() => onSelectItem(item)}
-              onToast={onToast}
-            />
+            <div key={item.id} className="transition-all duration-300 hover:-translate-y-1">
+              <MenuItemCard
+                item={item}
+                onClick={() => onSelectItem(item)}
+                onToast={onToast}
+              />
+            </div>
           ))}
         </div>
       )}

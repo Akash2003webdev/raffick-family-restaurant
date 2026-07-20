@@ -10,6 +10,7 @@ import CategoryPage from "./pages/CategoryPage";
 import ItemDetailPage from "./pages/ItemDetailPage";
 import CartPage from "./pages/CartPage";
 import ReviewsPage from "./pages/ReviewsPage";
+import EnquiryPage from "./pages/EnquiryPage";
 import AdminPage from "./pages/AdminPage";
 import SplashScreen from "./components/SplashScreen";
 
@@ -77,6 +78,7 @@ function AppShell() {
         <CartPage onToast={showToast} onOrderSent={() => navigate("home")} />
       )}
       {page === "reviews" && <ReviewsPage onToast={showToast} />}
+      {page === "enquiry" && <EnquiryPage onToast={showToast} />}
 
       {page !== "item" && <FloatingWhatsApp onNavigate={navigate} />}
 
