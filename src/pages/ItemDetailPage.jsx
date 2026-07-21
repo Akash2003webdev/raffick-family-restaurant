@@ -1,10 +1,23 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Minus, Plus, Flame, Sparkles, Star, ShoppingBag, Send, User, MessageSquare } from "lucide-react";
+import {
+  ArrowLeft,
+  Minus,
+  Plus,
+  Flame,
+  Sparkles,
+  Star,
+  ShoppingBag,
+  Send,
+  User,
+  MessageSquare,
+  Clock,
+} from "lucide-react";
 import VegBadge from "../components/VegBadge";
 import Stars from "../components/Stars";
 import ReviewCard from "../components/ReviewCard";
 import { useCart } from "../context/CartContext";
 import { getItemReviews, submitReview } from "../lib/api";
+import { isItemOrderableNow, getUnavailableReason } from "../lib/timeRestrictions";
 
 const SPICE_LABEL = { mild: "Mild", medium: "Medium", spicy: "Spicy" };
 
@@ -24,10 +37,15 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
   }, [item]);
 
   if (!item) return null;
+
+  // Time Restriction & Availability Logic
   const isSoldOut = item.status === "sold_out";
+  const orderable = isItemOrderableNow(item.categoryName);
+  const isBlocked = isSoldOut || !orderable;
   const price = variant?.price ?? 0;
 
   function handleAddToCart() {
+    if (isBlocked) return;
     addItem({
       id: item.id,
       name: item.name,
@@ -35,6 +53,7 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
       variantId: variant?.id ?? null,
       variantName: variant?.name ?? null,
       image: item.images?.[0],
+      categoryName: item.categoryName,
       quantity: qty,
     });
     onToast?.(`${item.name} added to cart`);
@@ -69,7 +88,7 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
           {/* Mobile Glassmorphic Back Action */}
           <button
             onClick={onBack}
-            className="absolute top-5 left-5 w-11 h-11 rounded-2xl bg-white/95 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-lg text-gray-800 hover:text-amber-500 transition-all active:scale-90 md:hidden"
+            className="absolute top-5 left-5 w-11 h-11 rounded-2xl bg-white/95 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-lg text-gray-800 hover:text-amber-500 transition-all active:scale-90 md:hidden z-10"
           >
             <ArrowLeft size={20} />
           </button>
@@ -110,10 +129,16 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
             </p>
           </div>
 
-          {/* Sold Out Notification */}
+          {/* Availability Status Banners */}
           {isSoldOut && (
             <div className="bg-rose-50 text-rose-600 border border-rose-100 text-sm font-bold rounded-2xl px-4 py-3 text-center shadow-sm">
               Currently Unavailable (Sold Out)
+            </div>
+          )}
+          {!isSoldOut && !orderable && (
+            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-900 text-sm font-bold rounded-2xl px-4 py-3 text-center shadow-sm flex items-center justify-center gap-2">
+              <Clock size={16} className="text-amber-600" />
+              <span>{getUnavailableReason(item.categoryName)}</span>
             </div>
           )}
 
@@ -172,8 +197,8 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
           <div className="hidden md:flex gap-4">
             <button
               onClick={handleAddToCart}
-              disabled={isSoldOut}
-              className="flex-1 py-4 rounded-2xl border-2 border-amber-500 text-amber-600 font-bold text-sm hover:bg-amber-50/50 disabled:opacity-40 transition-all active:scale-[0.99]"
+              disabled={isBlocked}
+              className="flex-1 py-4 rounded-2xl border-2 border-amber-500 text-amber-600 font-bold text-sm hover:bg-amber-50/50 disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-[0.99]"
             >
               Add to Basket
             </button>
@@ -182,8 +207,8 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
                 handleAddToCart();
                 onGoToCart?.();
               }}
-              disabled={isSoldOut}
-              className="group flex-1 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm tracking-wide shadow-lg shadow-orange-500/10 disabled:opacity-40 transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
+              disabled={isBlocked}
+              className="group flex-1 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm tracking-wide shadow-lg shadow-orange-500/10 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
             >
               Order Now
               <ShoppingBag size={16} />
@@ -237,7 +262,7 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
             />
           </div>
 
-          {/* Premium Dynamic Interactive Rating Box */}
+          {/* Interactive Rating Box */}
           <div className="bg-gray-50/50 border border-gray-200/60 rounded-xl p-3 flex flex-col items-center gap-1.5">
             <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">Your Rating</span>
             <div className="flex gap-1.5">
@@ -287,12 +312,12 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
         </form>
       </div>
 
-      {/* 4. Mobile Fixed Bottom Navigation Bar Overlay */}
+      {/* 4. Mobile Fixed Bottom Action Overlay */}
       <div className="fixed bottom-16 md:hidden left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100/80 p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.04)]">
         <div className="max-w-xl mx-auto flex gap-3">
           <button
             onClick={handleAddToCart}
-            disabled={isSoldOut}
+            disabled={isBlocked}
             className="flex-1 py-3.5 rounded-xl border-2 border-amber-500 text-amber-600 font-bold text-sm active:scale-95 transition-transform disabled:opacity-40 bg-white"
           >
             Add to Basket
@@ -302,7 +327,7 @@ export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
               handleAddToCart();
               onGoToCart?.();
             }}
-            disabled={isSoldOut}
+            disabled={isBlocked}
             className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm active:scale-95 transition-transform shadow-md shadow-orange-500/10 disabled:opacity-40"
           >
             Order Now

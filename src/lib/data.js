@@ -10,7 +10,7 @@ export const restaurantInfo = {
   rating: 4.5,
   reviewCount: 197,
   priceRange: "₹200–400 per person",
-  hours: "9:00 AM – 11:00 PM",
+  hours: "9:00 AM – 12:00 AM",
   heroImage:"/public/hero.png"
 };
 

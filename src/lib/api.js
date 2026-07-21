@@ -9,6 +9,7 @@ function normalizeItem(row) {
     ...row,
     images: row.images || [],
     variants: (row.variants || []).slice().sort((a, b) => a.sort_order - b.sort_order),
+    categoryName: row.category?.name,
   };
 }
 
@@ -38,7 +39,9 @@ export async function getCategoryById(id) {
 }
 
 export async function getMenuItems({ categoryId, search } = {}) {
-  let query = supabase.from("menu_items").select("*, variants:menu_item_variants(*)");
+  let query = supabase
+    .from("menu_items")
+    .select("*, variants:menu_item_variants(*), category:categories(name)");
   if (categoryId) query = query.eq("category_id", categoryId);
   if (search) query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
   const { data, error } = await query.order("created_at", { ascending: true });
@@ -49,7 +52,7 @@ export async function getMenuItems({ categoryId, search } = {}) {
 export async function getMenuItemById(id) {
   const { data, error } = await supabase
     .from("menu_items")
-    .select("*, variants:menu_item_variants(*)")
+    .select("*, variants:menu_item_variants(*), category:categories(name)")
     .eq("id", id)
     .single();
   if (error) throw error;
@@ -59,7 +62,7 @@ export async function getMenuItemById(id) {
 export async function getPopularItems(limit = 8) {
   const { data, error } = await supabase
     .from("menu_items")
-    .select("*, variants:menu_item_variants(*)")
+    .select("*, variants:menu_item_variants(*), category:categories(name)")
     .order("rating", { ascending: false })
     .limit(limit);
   if (error) throw error;

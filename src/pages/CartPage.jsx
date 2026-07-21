@@ -1,10 +1,24 @@
 import { useState } from "react";
-import { Minus, Plus, Trash2, ShoppingBag, User, Phone, MapPin, Hash, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingBag,
+  User,
+  Phone,
+  MapPin,
+  Hash,
+  ArrowRight,
+  Sparkles,
+  AlertCircle,
+  Clock,
+} from "lucide-react";
 import { useCart } from "../context/CartContext";
 import ConfirmOrderModal from "../components/ConfirmOrderModal";
 import { orderTypes } from "../lib/data";
 import { buildOrderMessage, sendWhatsAppMessage } from "../lib/whatsapp";
 import { submitOrder } from "../lib/api";
+import { isItemOrderableNow, getUnavailableReason } from "../lib/timeRestrictions";
 
 export default function CartPage({ onToast, onOrderSent }) {
   const { items, updateQuantity, removeItem, clearCart, total } = useCart();
@@ -15,8 +29,12 @@ export default function CartPage({ onToast, onOrderSent }) {
   const [phone, setPhone] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Time Restriction Integration
+  const blockedItems = items.filter((i) => !isItemOrderableNow(i.categoryName));
+
   const canOrder =
     items.length > 0 &&
+    blockedItems.length === 0 &&
     name.trim() &&
     phone.trim().length >= 10 &&
     (orderType !== "Dine-in" || tableNumber.trim()) &&
@@ -32,7 +50,15 @@ export default function CartPage({ onToast, onOrderSent }) {
       phone,
     });
     try {
-      await submitOrder({ cartItems: items, orderType, tableNumber, address, name, phone, total });
+      await submitOrder({
+        cartItems: items,
+        orderType,
+        tableNumber,
+        address,
+        name,
+        phone,
+        total,
+      });
     } catch (err) {
       console.error("Failed to save order to backend:", err);
     }
@@ -51,7 +77,9 @@ export default function CartPage({ onToast, onOrderSent }) {
           <ShoppingBag size={32} className="text-gray-300" />
           <span className="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-amber-400" />
         </div>
-        <h2 className="font-display font-black text-xl text-gray-800 tracking-tight">Your Cart is Empty</h2>
+        <h2 className="font-display font-black text-xl text-gray-800 tracking-tight">
+          Your Cart is Empty
+        </h2>
         <p className="text-gray-400 text-sm mt-2 max-w-xs leading-relaxed">
           Looks like you haven't added anything to your cart yet. Head back to our delicious menu!
         </p>
@@ -72,57 +100,94 @@ export default function CartPage({ onToast, onOrderSent }) {
         </h1>
       </div>
 
+      {/* Time Restriction Alert Banner */}
+      {blockedItems.length > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-900 text-xs md:text-sm rounded-2xl p-4 mb-6 flex items-start gap-3 backdrop-blur-sm animate-fadeUp">
+          <Clock size={18} className="text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold">
+              {blockedItems.map((i) => i.name).join(", ")}
+            </span>{" "}
+            {blockedItems.length > 1 ? "are" : "is"} currently unavailable.{" "}
+            <span className="text-amber-700 font-medium">
+              {getUnavailableReason(blockedItems[0].categoryName)}.
+            </span>{" "}
+            Please remove {blockedItems.length > 1 ? "them" : "this item"} to proceed with your order.
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_390px] gap-8 items-start">
         
         {/* Responsive Items List */}
         <div className="space-y-4">
-          {items.map((item) => (
-            <div
-              key={`${item.id}-${item.variantId || "default"}`}
-              className="bg-white rounded-2xl border border-gray-100/80 shadow-[0_10px_30px_rgba(0,0,0,0.02)] p-4 flex items-center gap-4 transition-all duration-300 hover:shadow-[0_15px_40px_rgba(0,0,0,0.04)]"
-            >
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-20 h-20 rounded-xl object-cover shrink-0 border border-gray-100"
-              />
-              
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-sm md:text-base text-gray-800 truncate">{item.name}</h3>
-                {item.variantName && (
-                  <span className="inline-block bg-gray-50 text-gray-500 font-semibold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md mt-0.5 border border-gray-100">
-                    {item.variantName}
-                  </span>
-                )}
-                <div className="text-base font-extrabold text-amber-600 mt-1">₹{item.price}</div>
-              </div>
-
-              {/* Modern Premium Quantity Controls */}
-              <div className="flex items-center gap-2.5 bg-gray-50/80 border border-gray-100 rounded-full p-1.5">
-                <button
-                  onClick={() => updateQuantity(item.id, item.variantId, item.quantity - 1)}
-                  className="w-7 h-7 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center transition-transform active:scale-90 hover:text-amber-600"
-                >
-                  <Minus size={12} />
-                </button>
-                <span className="text-sm font-bold w-5 text-center text-gray-800">{item.quantity}</span>
-                <button
-                  onClick={() => updateQuantity(item.id, item.variantId, item.quantity + 1)}
-                  className="w-7 h-7 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center transition-transform active:scale-90 hover:text-amber-600"
-                >
-                  <Plus size={12} />
-                </button>
-              </div>
-
-              {/* Trash Action */}
-              <button
-                onClick={() => removeItem(item.id, item.variantId)}
-                className="text-gray-400 hover:text-rose-500 p-1.5 transition-colors rounded-xl hover:bg-rose-50/50"
+          {items.map((item) => {
+            const isBlocked = !isItemOrderableNow(item.categoryName);
+            return (
+              <div
+                key={`${item.id}-${item.variantId || "default"}`}
+                className={`bg-white rounded-2xl border p-4 flex items-center gap-4 transition-all duration-300 ${
+                  isBlocked
+                    ? "border-amber-200/80 bg-amber-50/10 shadow-none"
+                    : "border-gray-100/80 shadow-[0_10px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.04)]"
+                }`}
               >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))}
+                <div className="relative shrink-0">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-20 h-20 rounded-xl object-cover border border-gray-100"
+                  />
+                  {isBlocked && (
+                    <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center p-1">
+                      <Clock size={16} className="text-white" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm md:text-base text-gray-800 truncate">
+                    {item.name}
+                  </h3>
+                  {item.variantName && (
+                    <span className="inline-block bg-gray-50 text-gray-500 font-semibold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md mt-0.5 border border-gray-100">
+                      {item.variantName}
+                    </span>
+                  )}
+                  <div className="text-base font-extrabold text-amber-600 mt-1">
+                    ₹{item.price}
+                  </div>
+                </div>
+
+                {/* Modern Premium Quantity Controls */}
+                <div className="flex items-center gap-2.5 bg-gray-50/80 border border-gray-100 rounded-full p-1.5">
+                  <button
+                    onClick={() => updateQuantity(item.id, item.variantId, item.quantity - 1)}
+                    className="w-7 h-7 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center transition-transform active:scale-90 hover:text-amber-600"
+                  >
+                    <Minus size={12} />
+                  </button>
+                  <span className="text-sm font-bold w-5 text-center text-gray-800">
+                    {item.quantity}
+                  </span>
+                  <button
+                    onClick={() => updateQuantity(item.id, item.variantId, item.quantity + 1)}
+                    className="w-7 h-7 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center transition-transform active:scale-90 hover:text-amber-600"
+                  >
+                    <Plus size={12} />
+                  </button>
+                </div>
+
+                {/* Trash Action */}
+                <button
+                  onClick={() => removeItem(item.id, item.variantId)}
+                  className="text-gray-400 hover:text-rose-500 p-1.5 transition-colors rounded-xl hover:bg-rose-50/50"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         {/* Premium Checkout Side Panel */}
@@ -154,7 +219,7 @@ export default function CartPage({ onToast, onOrderSent }) {
             </div>
           </div>
 
-          {/* Dynamic Input States */}
+          {/* Dynamic Input Fields */}
           <div className="space-y-4">
             {orderType === "Dine-in" && (
               <div className="relative group">
@@ -224,7 +289,7 @@ export default function CartPage({ onToast, onOrderSent }) {
         </div>
       </div>
 
-      {/* Mobile Sticky Bar */}
+      {/* Mobile Sticky Action Bar */}
       <div className="fixed bottom-16 md:hidden left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100/80 p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.04)]">
         <div className="max-w-xl mx-auto flex items-center justify-between gap-6">
           <div>
@@ -241,7 +306,7 @@ export default function CartPage({ onToast, onOrderSent }) {
         </div>
       </div>
 
-      {/* Premium Content Confirmation Modal */}
+      {/* Confirmation Modal */}
       <ConfirmOrderModal
         open={showConfirm}
         title="Verify Your Feast"
@@ -249,7 +314,6 @@ export default function CartPage({ onToast, onOrderSent }) {
         onConfirm={handleSend}
       >
         <div className="space-y-4 text-sm">
-          {/* Header Metadata */}
           <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
             <div>
               <span className="text-xs text-gray-400 block font-semibold uppercase tracking-wider">Order Modality</span>
@@ -269,7 +333,6 @@ export default function CartPage({ onToast, onOrderSent }) {
             )}
           </div>
 
-          {/* Cart Bill Details */}
           <div className="border border-gray-100 rounded-2xl p-3.5 space-y-2.5 bg-white shadow-inner max-h-40 overflow-y-auto">
             {items.map((item) => (
               <div
@@ -284,7 +347,6 @@ export default function CartPage({ onToast, onOrderSent }) {
             ))}
           </div>
 
-          {/* Total & Summary Metadata */}
           <div className="border-t border-gray-200/60 pt-3 flex justify-between items-center font-black text-gray-900 text-base">
             <span>Amount Payable</span>
             <span className="text-xl text-amber-600">₹{total}</span>
