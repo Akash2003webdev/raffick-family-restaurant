@@ -2,7 +2,7 @@
 // Updates document.title, meta description, and canonical link on route change.
 import { useEffect } from "react";
 
-const SITE_URL = "https://raffickrestaurant.com";
+const SITE_URL = "https://www.raffickrestaurant.com";
 
 export function useSEO({ title, description, path, noindex }) {
   useEffect(() => {
