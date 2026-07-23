@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { getCategories, getMenuItems } from "../lib/api";
+import { useSEO } from "../lib/seo";
 
 export default function MenuPage({ onSelectCategory }) {
+  useSEO({
+    title: "Menu | Raffick Restaurant Sattur - Veg & Non-Veg Dishes",
+    description:
+      "Explore the full menu at Raffick Restaurant, Sattur Main Road. Veg and non-veg dishes across all categories, freshly prepared daily. Order takeaway or delivery.",
+    path: "/menu",
+  });
+
   const [categories, setCategories] = useState([]);
   const [counts, setCounts] = useState({});
   const [isLoading, setIsLoading] = useState(true);

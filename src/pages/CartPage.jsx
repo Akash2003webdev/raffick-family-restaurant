@@ -18,9 +18,17 @@ import ConfirmOrderModal from "../components/ConfirmOrderModal";
 import { orderTypes } from "../lib/data";
 import { buildOrderMessage, sendWhatsAppMessage } from "../lib/whatsapp";
 import { submitOrder } from "../lib/api";
+import { useSEO } from "../lib/seo";
 import { isItemOrderableNow, getUnavailableReason } from "../lib/timeRestrictions";
 
 export default function CartPage({ onToast, onOrderSent }) {
+  useSEO({
+    title: "Your Cart | Raffick Restaurant Sattur",
+    description: "Review your order from Raffick Restaurant, Sattur before checkout.",
+    path: "/cart",
+    noindex: true,
+  });
+
   const { items, updateQuantity, removeItem, clearCart, total } = useCart();
   const [orderType, setOrderType] = useState("Dine-in");
   const [tableNumber, setTableNumber] = useState("");

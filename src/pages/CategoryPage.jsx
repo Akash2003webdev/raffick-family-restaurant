@@ -2,8 +2,19 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Sparkles, Utensils } from "lucide-react";
 import MenuItemCard from "../components/MenuItemCard";
 import { getMenuItems } from "../lib/api";
+import { useSEO } from "../lib/seo";
 
 export default function CategoryPage({ category, onBack, onSelectItem, onToast }) {
+  useSEO({
+    title: category
+      ? `${category.name} | Raffick Restaurant Sattur`
+      : "Menu Category | Raffick Restaurant Sattur",
+    description: category
+      ? `${category.name} at Raffick Restaurant, Sattur Main Road. Order online for takeaway or home delivery in Sattur, Virudhunagar.`
+      : "Browse this menu category at Raffick Restaurant, Sattur.",
+    path: category ? `/category/${category.id}` : undefined,
+  });
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 

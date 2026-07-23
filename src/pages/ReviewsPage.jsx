@@ -2,8 +2,16 @@ import { useEffect, useState } from "react";
 import { User, MessageSquare, Star, Sparkles, PenLine } from "lucide-react";
 import Stars from "../components/Stars";
 import { getOverallReviews, submitReview } from "../lib/api";
+import { useSEO } from "../lib/seo";
 
 export default function ReviewsPage({ onToast }) {
+  useSEO({
+    title: "Customer Reviews | Raffick Restaurant Sattur - 4.5★ Rated",
+    description:
+      "Read customer reviews for Raffick Restaurant, Sattur Main Road. Rated 4.5★ by 197+ happy customers. Share your own experience.",
+    path: "/reviews",
+  });
+
   const [reviews, setReviews] = useState([]);
   const [form, setForm] = useState({ name: "", rating: 5, comment: "" });
   const [submitting, setSubmitting] = useState(false);

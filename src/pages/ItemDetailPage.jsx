@@ -18,10 +18,21 @@ import ReviewCard from "../components/ReviewCard";
 import { useCart } from "../context/CartContext";
 import { getItemReviews, submitReview } from "../lib/api";
 import { isItemOrderableNow, getUnavailableReason } from "../lib/timeRestrictions";
+import { useSEO } from "../lib/seo";
 
 const SPICE_LABEL = { mild: "Mild", medium: "Medium", spicy: "Spicy" };
 
 export default function ItemDetailPage({ item, onBack, onToast, onGoToCart }) {
+  useSEO({
+    title: item
+      ? `${item.name} | Raffick Restaurant Sattur`
+      : "Menu Item | Raffick Restaurant Sattur",
+    description: item
+      ? `${item.name}${item.description ? " - " + item.description : ""} — order online from Raffick Restaurant, Sattur Main Road. Takeaway & home delivery available.`
+      : "Order this dish online from Raffick Restaurant, Sattur.",
+    path: item ? `/item/${item.id}` : undefined,
+  });
+
   const { addItem } = useCart();
   const [variant, setVariant] = useState(item?.variants?.[0] || null);
   const [qty, setQty] = useState(1);

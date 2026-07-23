@@ -13,6 +13,7 @@ import {
 } from "../lib/api";
 import logo from "../assets/logo.png";  
 import heroImage from "../assets/hero.png";  
+import { useSEO } from "../lib/seo";
 
 
 function getGreeting() {
@@ -28,6 +29,13 @@ export default function HomePage({
   onSelectItem,
   onToast,
 }) {
+  useSEO({
+    title: "Raffick Restaurant Sattur | Best Multi-Cuisine Family Restaurant Near Me",
+    description:
+      "Raffick Restaurant, Sattur Main Road (Near ICICI Bank) - Sattur's top-rated multi-cuisine family restaurant. Veg & non-veg, takeaway and home delivery. Rated 4.5★ by 197+ customers. Call 7010276225.",
+    path: "/",
+  });
+
   const [info, setInfo] = useState(null);
   const [categories, setCategories] = useState([]);
   const [popular, setPopular] = useState([]);

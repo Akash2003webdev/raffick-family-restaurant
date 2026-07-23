@@ -3,10 +3,18 @@ import { MessageCircleQuestion, User, Phone, MessageSquare, ArrowRight } from "l
 import ConfirmOrderModal from "../components/ConfirmOrderModal";
 import { submitEnquiry } from "../lib/api";
 import { buildEnquiryMessage, sendWhatsAppMessage } from "../lib/whatsapp";
+import { useSEO } from "../lib/seo";
 
 const ENQUIRY_TYPES = ["General", "Bulk Order", "Catering", "Feedback", "Other"];
 
 export default function EnquiryPage({ onToast }) {
+  useSEO({
+    title: "Enquiry | Raffick Restaurant Sattur - Bulk Orders & Catering",
+    description:
+      "Get in touch with Raffick Restaurant, Sattur for bulk orders, catering, or general enquiries. Call 7010276225 or send us a message.",
+    path: "/enquiry",
+  });
+
   const [form, setForm] = useState({
     name: "",
     phone: "",
